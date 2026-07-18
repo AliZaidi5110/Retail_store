@@ -37,8 +37,27 @@ export default async function ShopDetailPage({
   const shop = await getShop(id);
   if (!shop) notFound();
 
-  const ledgerRows = shop.stockIssues.flatMap((issue) =>
-    issue.items.map((item) => {
+  const ledgerRows = shop.stockIssues.flatMap((issue) => {
+    if (issue.items.length === 0) {
+      return [
+        {
+          key: issue.id,
+          date: issue.date,
+          product: issue.notes || "Opening balance / credit",
+          qtyTaken: null as number | null,
+          qtyOriginal: 0,
+          qtyReturned: 0,
+          rate: null as number | null,
+          totalAmount: decimalToNumber(issue.totalAmount),
+          amountPaid: decimalToNumber(issue.amountPaid),
+          amountRemaining: decimalToNumber(issue.amountRemaining),
+          status: issue.status,
+          issueId: issue.id,
+        },
+      ];
+    }
+
+    return issue.items.map((item) => {
       const qtyTaken = item.quantity - item.quantityReturned;
       const lineTotal = decimalToNumber(item.lineTotal);
       const issueTotal = decimalToNumber(issue.totalAmount) || 1;
@@ -59,8 +78,8 @@ export default async function ShopDetailPage({
         status: issue.status,
         issueId: issue.id,
       };
-    })
-  );
+    });
+  });
 
   const totalGiven = shop.stockIssues.reduce(
     (s, i) => s + decimalToNumber(i.totalAmount),
@@ -174,8 +193,8 @@ export default async function ShopDetailPage({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{row.qtyTaken}</TableCell>
-                    <TableCell>{formatPKR(row.rate)}</TableCell>
+                    <TableCell>{row.qtyTaken ?? "—"}</TableCell>
+                    <TableCell>{row.rate == null ? "—" : formatPKR(row.rate)}</TableCell>
                     <TableCell>{formatPKR(row.totalAmount)}</TableCell>
                     <TableCell>{formatPKR(row.amountPaid)}</TableCell>
                     <TableCell className="font-medium text-amber-700">

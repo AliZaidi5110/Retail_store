@@ -153,7 +153,9 @@ export async function createShop(data: unknown): Promise<ActionResult> {
     return { success: false, message: parsed.error.errors[0]?.message ?? "Invalid shop" };
   }
 
-  await prisma.shop.create({
+  const openingBalance = roundMoney(parsed.data.openingBalance || 0);
+
+  const shop = await prisma.shop.create({
     data: {
       shopName: parsed.data.shopName,
       ownerName: parsed.data.ownerName,
@@ -164,9 +166,29 @@ export async function createShop(data: unknown): Promise<ActionResult> {
     },
   });
 
+  if (openingBalance > 0) {
+    await prisma.stockIssue.create({
+      data: {
+        shopId: shop.id,
+        date: new Date(),
+        totalAmount: openingBalance,
+        amountPaid: 0,
+        amountRemaining: openingBalance,
+        status: "UNPAID",
+        notes: "Opening balance / previous credit",
+      },
+    });
+  }
+
   revalidatePath("/shops");
   revalidatePath("/dashboard");
-  return { success: true, message: "Shop added" };
+  return {
+    success: true,
+    message:
+      openingBalance > 0
+        ? "Shop added with opening amount owed"
+        : "Shop added",
+  };
 }
 
 export async function updateShop(id: string, data: unknown): Promise<ActionResult> {

@@ -19,6 +19,7 @@ const empty: ShopInput = {
   address: "",
   cnic: "",
   notes: "",
+  openingBalance: 0,
 };
 
 export function ShopForm({
@@ -39,6 +40,7 @@ export function ShopForm({
       address: initial?.address || "",
       cnic: initial?.cnic || "",
       notes: initial?.notes || "",
+      openingBalance: initial?.openingBalance ?? 0,
     },
   });
 
@@ -82,6 +84,22 @@ export function ShopForm({
         <Label htmlFor="cnic">CNIC (optional)</Label>
         <Input id="cnic" placeholder="xxxxx-xxxxxxx-x" {...form.register("cnic")} />
       </div>
+      {!isEdit && (
+        <div className="space-y-2">
+          <Label htmlFor="openingBalance">Amount owed (PKR)</Label>
+          <Input
+            id="openingBalance"
+            type="number"
+            min={0}
+            step="0.01"
+            placeholder="0"
+            {...form.register("openingBalance")}
+          />
+          <p className="text-xs text-slate-500">
+            Previous credit already outstanding. Leave 0 if starting fresh.
+          </p>
+        </div>
+      )}
       <div className="space-y-2 sm:col-span-2">
         <Label htmlFor="notes">Notes</Label>
         <Textarea id="notes" rows={2} {...form.register("notes")} />

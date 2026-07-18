@@ -7,6 +7,8 @@ export const shopSchema = z.object({
   address: z.string().optional().nullable(),
   cnic: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  /** Opening credit balance already owed by this shop (PKR) */
+  openingBalance: z.coerce.number().min(0).default(0),
 });
 
 export type ShopInput = z.infer<typeof shopSchema>;
