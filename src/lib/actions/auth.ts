@@ -33,6 +33,20 @@ export async function loginAction(
   }
 
   try {
+    // Ensure DB is reachable before auth (clearer error on Vercel misconfig)
+    await prisma.user.findUnique({
+      where: { email: parsed.data.email.toLowerCase() },
+      select: { id: true },
+    });
+  } catch {
+    return {
+      success: false,
+      message:
+        "Database is not connected. Add DATABASE_URL in Vercel and run the seed script.",
+    };
+  }
+
+  try {
     await signIn("credentials", {
       email: parsed.data.email.toLowerCase(),
       password: parsed.data.password,
