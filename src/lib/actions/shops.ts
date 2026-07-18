@@ -217,6 +217,86 @@ export async function updateShop(id: string, data: unknown): Promise<ActionResul
   return { success: true, message: "Shop updated" };
 }
 
+/** Set the shop's total unpaid/outstanding balance (khata correction). */
+export async function setShopUnpaidAmount(
+  shopId: string,
+  unpaidAmount: number
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { success: false, message: "Unauthorized" };
+
+  const target = roundMoney(Number(unpaidAmount));
+  if (!Number.isFinite(target) || target < 0) {
+    return { success: false, message: "Enter a valid unpaid amount (0 or more)" };
+  }
+
+  const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+  if (!shop) return { success: false, message: "Shop not found" };
+
+  const openIssues = await prisma.stockIssue.findMany({
+    where: { shopId },
+    orderBy: { date: "asc" },
+  });
+
+  const current = roundMoney(
+    openIssues.reduce((s, i) => s + decimalToNumber(i.amountRemaining), 0)
+  );
+  const diff = roundMoney(target - current);
+
+  if (Math.abs(diff) < 0.001) {
+    return { success: true, message: "Unpaid amount is already up to date" };
+  }
+
+  if (diff > 0) {
+    await prisma.stockIssue.create({
+      data: {
+        shopId,
+        date: new Date(),
+        totalAmount: diff,
+        amountPaid: 0,
+        amountRemaining: diff,
+        status: "UNPAID",
+        notes: "Unpaid balance adjustment",
+      },
+    });
+  } else {
+    let toReduce = roundMoney(-diff);
+    await prisma.$transaction(async (tx) => {
+      const issues = await tx.stockIssue.findMany({
+        where: { shopId, amountRemaining: { gt: 0 } },
+        orderBy: { date: "asc" },
+      });
+
+      for (const issue of issues) {
+        if (toReduce <= 0) break;
+        const remaining = decimalToNumber(issue.amountRemaining);
+        const cut = roundMoney(Math.min(remaining, toReduce));
+        const paid = decimalToNumber(issue.amountPaid);
+        const newRemaining = roundMoney(remaining - cut);
+        const newTotal = roundMoney(paid + newRemaining);
+
+        await tx.stockIssue.update({
+          where: { id: issue.id },
+          data: {
+            totalAmount: newTotal,
+            amountRemaining: newRemaining,
+            status: issueStatus(paid, newTotal),
+            notes: issue.notes
+              ? `${issue.notes} | Balance reduced by admin`
+              : "Balance reduced by admin",
+          },
+        });
+        toReduce = roundMoney(toReduce - cut);
+      }
+    });
+  }
+
+  revalidatePath("/shops");
+  revalidatePath(`/shops/${shopId}`);
+  revalidatePath("/dashboard");
+  return { success: true, message: `Unpaid amount set to ${target.toFixed(2)} PKR` };
+}
+
 export async function issueStock(data: unknown): Promise<ActionResult & { id?: string }> {
   const session = await auth();
   if (!session?.user) return { success: false, message: "Unauthorized" };

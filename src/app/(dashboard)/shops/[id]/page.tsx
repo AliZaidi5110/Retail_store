@@ -18,6 +18,7 @@ import {
 import { ShopForm } from "@/components/shops/shop-form";
 import { ShopPaymentForm } from "@/components/shops/shop-payment-form";
 import { StockReturnForm } from "@/components/shops/stock-return-form";
+import { SetUnpaidForm } from "@/components/shops/set-unpaid-form";
 import { formatPKR } from "@/lib/currency";
 import { decimalToNumber } from "@/lib/utils";
 
@@ -152,6 +153,18 @@ export default async function ShopDetailPage({
           </CardHeader>
         </Card>
       </div>
+
+      <Card className="mb-4 border-amber-200">
+        <CardHeader>
+          <CardTitle>Amount left / unpaid</CardTitle>
+          <CardDescription>
+            Set or correct how much this shop still owes on their khata
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SetUnpaidForm shopId={shop.id} currentUnpaid={outstanding} />
+        </CardContent>
+      </Card>
 
       <Card className="mb-4">
         <CardHeader>
