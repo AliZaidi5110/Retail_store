@@ -7,6 +7,7 @@ import {
   TrendingUp,
   AlertTriangle,
   ArrowRight,
+  Building2,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getDashboardData } from "@/lib/actions/dashboard";
@@ -89,6 +90,30 @@ export default async function DashboardPage() {
             );
           })}
         </div>
+
+        <Card className="border-amber-200 bg-amber-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-sm font-medium text-amber-900">
+                Total Outstanding from Shops
+              </CardTitle>
+              <CardDescription className="text-amber-800/80">
+                Credit khata only — not counted as sales revenue until payment is recorded
+              </CardDescription>
+            </div>
+            <Building2 className="h-5 w-5 text-amber-700" />
+          </CardHeader>
+          <CardContent className="flex items-end justify-between gap-3">
+            <div className="text-3xl font-bold text-amber-800">
+              {formatPKR(data.shopsOutstanding)}
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/shops">
+                View shops <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-4 xl:grid-cols-3">
           <Card className="xl:col-span-2">

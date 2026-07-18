@@ -12,6 +12,7 @@ import {
   Settings,
   TrendingUp,
   Store,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/products", label: "Products", icon: Package },
   { href: "/sales", label: "Sales", icon: ShoppingCart },
   { href: "/expenses", label: "Expenses", icon: Wallet },
+  { href: "/shops", label: "Shops / Khata", icon: Building2 },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/profit-loss", label: "Profit & Loss", icon: TrendingUp },
   { href: "/suppliers", label: "Suppliers", icon: Truck },

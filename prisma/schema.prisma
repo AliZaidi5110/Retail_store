@@ -33,6 +33,12 @@ enum StockMovementType {
   OUT
 }
 
+enum StockIssueStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
 model User {
   id               String    @id @default(cuid())
   name             String
@@ -107,12 +113,93 @@ model Product {
   image         String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  saleItems     SaleItem[]
-  stockMovements StockMovement[]
+  saleItems       SaleItem[]
+  stockMovements  StockMovement[]
+  stockIssueItems StockIssueItem[]
 
   @@index([categoryId])
   @@index([supplierId])
   @@index([name])
+}
+
+model Shop {
+  id          String       @id @default(cuid())
+  shopName    String
+  ownerName   String
+  phone       String?
+  address     String?
+  cnic        String?
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  stockIssues StockIssue[]
+  payments    ShopPayment[]
+
+  @@index([shopName])
+  @@index([phone])
+}
+
+model StockIssue {
+  id              String           @id @default(cuid())
+  shopId          String
+  shop            Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  date            DateTime
+  totalAmount     Decimal          @db.Decimal(12, 2)
+  amountPaid      Decimal          @default(0) @db.Decimal(12, 2)
+  amountRemaining Decimal          @db.Decimal(12, 2)
+  status          StockIssueStatus @default(UNPAID)
+  notes           String?
+  createdAt       DateTime         @default(now())
+  items           StockIssueItem[]
+  payments        ShopPayment[]
+
+  @@index([shopId])
+  @@index([date])
+  @@index([status])
+}
+
+model StockIssueItem {
+  id               String        @id @default(cuid())
+  stockIssueId     String
+  stockIssue       StockIssue    @relation(fields: [stockIssueId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity         Int
+  quantityReturned Int           @default(0)
+  ratePerUnit      Decimal       @db.Decimal(12, 2)
+  lineTotal        Decimal       @db.Decimal(12, 2)
+  returns          StockReturn[]
+
+  @@index([stockIssueId])
+  @@index([productId])
+}
+
+model ShopPayment {
+  id            String        @id @default(cuid())
+  shopId        String
+  shop          Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  stockIssueId  String?
+  stockIssue    StockIssue?   @relation(fields: [stockIssueId], references: [id], onDelete: SetNull)
+  amountPaid    Decimal       @db.Decimal(12, 2)
+  datePaid      DateTime
+  paymentMethod PaymentMethod @default(CASH)
+  notes         String?
+  createdAt     DateTime      @default(now())
+
+  @@index([shopId])
+  @@index([stockIssueId])
+  @@index([datePaid])
+}
+
+model StockReturn {
+  id               String         @id @default(cuid())
+  stockIssueItemId String
+  stockIssueItem   StockIssueItem @relation(fields: [stockIssueItemId], references: [id], onDelete: Cascade)
+  quantityReturned Int
+  dateReturned     DateTime
+  createdAt        DateTime       @default(now())
+
+  @@index([stockIssueItemId])
 }
 
 model Sale {

@@ -17,6 +17,8 @@ export const config = {
     "/reports/:path*",
     "/suppliers",
     "/suppliers/:path*",
+    "/shops",
+    "/shops/:path*",
     "/settings",
     "/settings/:path*",
     "/profit-loss",

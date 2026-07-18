@@ -11,6 +11,11 @@ async function main() {
     products: (await prisma.product.deleteMany()).count,
     supplierPayments: (await prisma.supplierPayment.deleteMany()).count,
     suppliers: (await prisma.supplier.deleteMany()).count,
+    stockReturns: (await prisma.stockReturn.deleteMany()).count,
+    shopPayments: (await prisma.shopPayment.deleteMany()).count,
+    stockIssueItems: (await prisma.stockIssueItem.deleteMany()).count,
+    stockIssues: (await prisma.stockIssue.deleteMany()).count,
+    shops: (await prisma.shop.deleteMany()).count,
     categories: (await prisma.category.deleteMany()).count,
   };
 

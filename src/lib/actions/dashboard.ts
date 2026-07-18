@@ -25,6 +25,7 @@ export async function getDashboardData() {
     expensesLast30,
     topProductsRaw,
     cogsItems,
+    shopsOutstandingAgg,
   ] = await Promise.all([
     prisma.product.count(),
     prisma.product.findMany({
@@ -79,6 +80,9 @@ export async function getDashboardData() {
     prisma.saleItem.findMany({
       where: { sale: { createdAt: { gte: from30 } } },
       select: { purchasePrice: true, quantity: true },
+    }),
+    prisma.stockIssue.aggregate({
+      _sum: { amountRemaining: true },
     }),
   ]);
 
@@ -167,5 +171,6 @@ export async function getDashboardData() {
     topProducts,
     recentSales,
     recentExpenses,
+    shopsOutstanding: decimalToNumber(shopsOutstandingAgg._sum.amountRemaining),
   };
 }
