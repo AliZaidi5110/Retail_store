@@ -34,8 +34,72 @@ export async function getSupplier(id: string) {
         include: { category: true },
         orderBy: { name: "asc" },
       },
+      payments: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
     },
   });
+}
+
+export async function recordSupplierPayment(
+  supplierId: string,
+  data: { mode: "full" | "manual"; amount?: number; note?: string }
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { success: false, message: "Unauthorized" };
+
+  const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
+  if (!supplier) return { success: false, message: "Supplier not found" };
+
+  const owed = Number(supplier.amountOwed);
+  if (owed <= 0) {
+    return { success: false, message: "No outstanding amount for this supplier" };
+  }
+
+  let paymentAmount = 0;
+  if (data.mode === "full") {
+    paymentAmount = owed;
+  } else {
+    paymentAmount = Number(data.amount);
+    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+      return { success: false, message: "Enter a valid payment amount" };
+    }
+    if (paymentAmount > owed) {
+      return {
+        success: false,
+        message: `Payment cannot exceed amount owed (${owed.toFixed(2)})`,
+      };
+    }
+  }
+
+  const remaining = Math.max(0, Math.round((owed - paymentAmount) * 100) / 100);
+
+  await prisma.$transaction([
+    prisma.supplierPayment.create({
+      data: {
+        supplierId,
+        amount: paymentAmount,
+        note:
+          data.note?.trim() ||
+          (data.mode === "full" ? "Paid in full" : "Partial payment"),
+      },
+    }),
+    prisma.supplier.update({
+      where: { id: supplierId },
+      data: { amountOwed: remaining },
+    }),
+  ]);
+
+  revalidatePath("/suppliers");
+  revalidatePath(`/suppliers/${supplierId}`);
+  return {
+    success: true,
+    message:
+      remaining === 0
+        ? "Full payment recorded — balance is cleared"
+        : `Payment recorded. Remaining balance updated.`,
+  };
 }
 
 export async function createSupplier(data: unknown): Promise<ActionResult> {

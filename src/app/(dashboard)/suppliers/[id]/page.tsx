@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { format } from "date-fns";
 import { auth } from "@/lib/auth";
 import { getSupplier } from "@/lib/actions/suppliers";
 import { AppShell } from "@/components/layout/app-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SupplierForm } from "@/components/suppliers/supplier-form";
+import { SupplierPaymentForm } from "@/components/suppliers/supplier-payment-form";
 import { formatPKR } from "@/lib/currency";
 import { decimalToNumber } from "@/lib/utils";
 
@@ -26,6 +28,8 @@ export default async function SupplierDetailPage({
   const { id } = await params;
   const supplier = await getSupplier(id);
   if (!supplier) notFound();
+
+  const amountOwed = decimalToNumber(supplier.amountOwed);
 
   return (
     <AppShell
@@ -52,64 +56,109 @@ export default async function SupplierDetailPage({
                 email: supplier.email,
                 phone: supplier.phone,
                 address: supplier.address,
-                amountOwed: decimalToNumber(supplier.amountOwed),
+                amountOwed,
                 notes: supplier.notes,
               }}
             />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Purchase history (linked products)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-3 text-sm text-slate-500">
-              Amount owed:{" "}
-              <span className="font-semibold text-amber-700">
-                {formatPKR(decimalToNumber(supplier.amountOwed))}
-              </span>
-            </p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Cost</TableHead>
-                  <TableHead>Stock</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {supplier.products.length === 0 ? (
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Record payment</CardTitle>
+              <CardDescription>
+                Mark the balance as paid in full, or enter how much was paid
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SupplierPaymentForm supplierId={supplier.id} amountOwed={amountOwed} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Payment history</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {supplier.payments.length === 0 ? (
+                <p className="text-sm text-slate-500">No payments recorded yet</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Note</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {supplier.payments.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>{format(p.createdAt, "dd MMM yyyy HH:mm")}</TableCell>
+                        <TableCell className="font-medium text-teal-800">
+                          {formatPKR(decimalToNumber(p.amount))}
+                        </TableCell>
+                        <TableCell className="text-slate-500">{p.note || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Linked products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-3 text-sm text-slate-500">
+                Amount owed:{" "}
+                <span className="font-semibold text-amber-700">{formatPKR(amountOwed)}</span>
+              </p>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-slate-500">
-                      No products linked
-                    </TableCell>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Cost</TableHead>
+                    <TableHead>Stock</TableHead>
                   </TableRow>
-                ) : (
-                  supplier.products.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <Link
-                          href={`/products/${p.id}`}
-                          className="text-teal-700 hover:underline"
-                        >
-                          {p.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{p.category.name}</TableCell>
-                      <TableCell>
-                        {formatPKR(decimalToNumber(p.purchasePrice))}
-                      </TableCell>
-                      <TableCell>
-                        {p.quantity} {p.unit}
+                </TableHeader>
+                <TableBody>
+                  {supplier.products.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-slate-500">
+                        No products linked
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                  ) : (
+                    supplier.products.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <Link
+                            href={`/products/${p.id}`}
+                            className="text-teal-700 hover:underline"
+                          >
+                            {p.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{p.category.name}</TableCell>
+                        <TableCell>
+                          {formatPKR(decimalToNumber(p.purchasePrice))}
+                        </TableCell>
+                        <TableCell>
+                          {p.quantity} {p.unit}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppShell>
   );

@@ -64,17 +64,30 @@ model Category {
 }
 
 model Supplier {
-  id         String    @id @default(cuid())
+  id         String            @id @default(cuid())
   name       String
   contact    String?
   email      String?
   phone      String?
   address    String?
-  amountOwed Decimal   @default(0) @db.Decimal(12, 2)
+  amountOwed Decimal           @default(0) @db.Decimal(12, 2)
   notes      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
   products   Product[]
+  payments   SupplierPayment[]
+}
+
+model SupplierPayment {
+  id         String   @id @default(cuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount     Decimal  @db.Decimal(12, 2)
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([supplierId])
+  @@index([createdAt])
 }
 
 model Product {

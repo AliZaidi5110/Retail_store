@@ -10,6 +10,7 @@ async function main() {
   await prisma.stockMovement.deleteMany();
   await prisma.expense.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.supplierPayment.deleteMany();
   await prisma.supplier.deleteMany();
   await prisma.category.deleteMany();
   await prisma.storeSettings.deleteMany();
