@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Unit {
+  PCS
+  KG
+  BOX
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
+}
+
+enum ExpenseCategory {
+  RENT
+  UTILITIES
+  SALARIES
+  TRANSPORT
+  PURCHASE_OF_GOODS
+  MISC
+}
+
+enum StockMovementType {
+  IN
+  OUT
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model StoreSettings {
+  id         String  @id @default(cuid())
+  storeName  String
+  logo       String?
+  address    String?
+  phone      String?
+  currency   String  @default("PKR")
+  taxRate    Decimal @default(0) @db.Decimal(5, 2)
+  gstEnabled Boolean @default(false)
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  products    Product[]
+}
+
+model Supplier {
+  id         String    @id @default(cuid())
+  name       String
+  contact    String?
+  email      String?
+  phone      String?
+  address    String?
+  amountOwed Decimal   @default(0) @db.Decimal(12, 2)
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  products   Product[]
+}
+
+model Product {
+  id            String          @id @default(cuid())
+  name          String
+  sku           String          @unique
+  barcode       String?
+  categoryId    String
+  category      Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  purchasePrice Decimal         @db.Decimal(12, 2)
+  sellingPrice  Decimal         @db.Decimal(12, 2)
+  quantity      Int             @default(0)
+  reorderLevel  Int             @default(5)
+  unit          Unit            @default(PCS)
+  supplierId    String?
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  image         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  saleItems     SaleItem[]
+  stockMovements StockMovement[]
+
+  @@index([categoryId])
+  @@index([supplierId])
+  @@index([name])
+}
+
+model Sale {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  discount      Decimal       @default(0) @db.Decimal(12, 2)
+  subtotal      Decimal       @db.Decimal(12, 2)
+  total         Decimal       @db.Decimal(12, 2)
+  paymentMethod PaymentMethod @default(CASH)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id            String  @id @default(cuid())
+  saleId        String
+  sale          Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity      Int
+  unitPrice     Decimal @db.Decimal(12, 2)
+  purchasePrice Decimal @db.Decimal(12, 2)
+  discount      Decimal @default(0) @db.Decimal(12, 2)
+  total         Decimal @db.Decimal(12, 2)
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+model Expense {
+  id                String          @id @default(cuid())
+  category          ExpenseCategory
+  amount            Decimal         @db.Decimal(12, 2)
+  description       String?
+  date              DateTime
+  receiptUrl        String?
+  isRecurring       Boolean         @default(false)
+  recurringInterval String?
+  createdAt         DateTime        @default(now())
+
+  @@index([date])
+  @@index([category])
+}
+
+model StockMovement {
+  id        String            @id @default(cuid())
+  productId String
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      StockMovementType
+  quantity  Int
+  reason    String
+  reference String?
+  createdAt DateTime          @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
