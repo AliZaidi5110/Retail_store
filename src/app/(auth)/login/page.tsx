@@ -24,9 +24,6 @@ export default async function LoginPage() {
         </CardHeader>
         <CardContent>
           <LoginForm />
-          <p className="mt-6 text-center text-xs text-slate-500">
-            Demo: owner@store.pk / Store@123
-          </p>
         </CardContent>
       </Card>
     </div>

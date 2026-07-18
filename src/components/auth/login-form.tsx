@@ -24,8 +24,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          defaultValue="owner@store.pk"
-          placeholder="owner@store.pk"
+          placeholder="you@example.com"
         />
       </div>
       <div className="space-y-2">
@@ -45,7 +44,6 @@ export function LoginForm() {
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             required
-            defaultValue="Store@123"
             className="pr-10"
           />
           <button
