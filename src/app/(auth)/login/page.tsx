@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default async function LoginPage() {
   const session = await auth();
-  if (session) redirect("/dashboard");
+  // Only treat a real user session as logged in (Auth.js can return a
+  // truthy config-error object when AUTH_SECRET is missing).
+  if (session?.user) redirect("/dashboard");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-teal-50 to-slate-200 p-4">

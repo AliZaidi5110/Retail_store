@@ -1,41 +1,7 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
 
-const protectedPrefixes = [
-  "/dashboard",
-  "/products",
-  "/sales",
-  "/expenses",
-  "/reports",
-  "/suppliers",
-  "/settings",
-  "/profit-loss",
-];
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isProtected = protectedPrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
-
-  if (!isProtected) {
-    return NextResponse.next();
-  }
-
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  });
-
-  if (!token) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
-}
+export default NextAuth(authConfig).auth;
 
 export const config = {
   matcher: [
