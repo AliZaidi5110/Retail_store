@@ -34,6 +34,16 @@ export function SupplierForm({
     },
   });
 
+  const emptyValues: SupplierInput = {
+    name: "",
+    contact: "",
+    email: "",
+    phone: "",
+    address: "",
+    amountOwed: 0,
+    notes: "",
+  };
+
   async function onSubmit(values: SupplierInput) {
     setPending(true);
     try {
@@ -45,7 +55,11 @@ export function SupplierForm({
         return;
       }
       toast.success(result.message);
-      router.push(isEdit ? `/suppliers/${initial!.id}` : "/suppliers");
+      if (isEdit) {
+        router.push(`/suppliers/${initial!.id}`);
+      } else {
+        form.reset(emptyValues);
+      }
       router.refresh();
     } finally {
       setPending(false);
