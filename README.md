@@ -17,7 +17,7 @@ All money values are shown in PKR (e.g. `Rs. 125,000`).
 ## Prerequisites
 
 - Node.js 20+
-- PostgreSQL 14+ (Docker Compose included, or use a local install)
+- A PostgreSQL database — **Supabase (free)** recommended for production, or Docker/local for development
 
 ## Quick start
 
@@ -45,7 +45,8 @@ cp .env.example .env
 Required variables:
 
 ```
-DATABASE_URL="postgresql://inventory:inventory@localhost:5432/inventory?schema=public"
+DATABASE_URL="..."
+DIRECT_URL="..."
 NEXTAUTH_SECRET="change-me-to-a-long-random-secret-key-at-least-32-chars"
 NEXTAUTH_URL="http://localhost:3000"
 AUTH_SECRET="change-me-to-a-long-random-secret-key-at-least-32-chars"
@@ -53,31 +54,25 @@ AUTH_SECRET="change-me-to-a-long-random-secret-key-at-least-32-chars"
 
 Change `AUTH_SECRET` / `NEXTAUTH_SECRET` before any real deployment.
 
-### 3. Start PostgreSQL
+### 3. Database — Supabase (recommended)
 
-**Option A — Docker (recommended)**
+1. Create a free project at [https://supabase.com](https://supabase.com)
+2. Open **Project Settings → Database** (or **Connect**)
+3. Copy the **Prisma** connection strings:
+   - **Transaction pooler** (port `6543`) → `DATABASE_URL` (append `?pgbouncer=true` if missing)
+   - **Session pooler** (port `5432`) → `DIRECT_URL`
+4. Paste both into `.env` and into **Vercel → Project → Settings → Environment Variables**
+5. Then run schema + seed (step 4)
+
+See also: [Supabase + Prisma docs](https://supabase.com/docs/guides/database/prisma)
+
+**Local alternative — Docker**
 
 ```bash
 docker compose up -d
 ```
 
-This starts Postgres 16 on port `5432` with user / password / database `inventory`.
-
-**Option B — Local PostgreSQL**
-
-Create a database and user that match `.env`, for example in `psql`:
-
-```sql
-CREATE USER inventory WITH PASSWORD 'inventory';
-CREATE DATABASE inventory OWNER inventory;
-GRANT ALL PRIVILEGES ON DATABASE inventory TO inventory;
-```
-
-Or point `DATABASE_URL` at an existing local database:
-
-```
-DATABASE_URL="postgresql://YOUR_USER:YOUR_PASSWORD@localhost:5432/YOUR_DB?schema=public"
-```
+Use the local URLs from `.env.example` for both `DATABASE_URL` and `DIRECT_URL`.
 
 ### 4. Schema + seed
 
